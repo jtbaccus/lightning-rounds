@@ -30,7 +30,6 @@ npx tsx scripts/seed.ts         # Seed Supabase from questions.json
 - `src/app/api/categories/route.ts` — Category list with counts
 - `src/app/api/history/route.ts` — Answered questions list
 - `src/app/api/reset/route.ts` — Reset all questions
-- `src/lib/supabase.ts` — Database client (with config check)
 - `src/lib/local-store.ts` — In-memory store for local dev
 - `data/questions.json` — Question data (sample or parsed)
 
@@ -137,3 +136,45 @@ The app has 3 tabbed pages:
 4. Deploy
 
 Production requires Supabase — local JSON mode is dev-only.
+
+## Known Issues & Lessons Learned
+
+### Supabase Client Caching Bug (2026-01-26)
+
+**Problem:** The `@supabase/supabase-js` client caches query results in Vercel's serverless environment. Even creating fresh client instances per request doesn't help — the library has internal caching that persists across function invocations (warm starts).
+
+**Symptoms:**
+- Queries with `.eq('asked', true)` returned stale data
+- Updates appeared successful (returned updated rows) but reads showed old values
+- Different API routes got inconsistent data from the same table
+
+**Root cause:** The Supabase JS client maintains internal state/caching that survives between serverless invocations when Vercel reuses the same function instance.
+
+**Solution:** Use raw `fetch()` calls to the Supabase REST API instead of the JS client:
+
+```typescript
+// Instead of:
+const { data } = await supabase.from('questions').select('*');
+
+// Use:
+const response = await fetch(
+  `${supabaseUrl}/rest/v1/questions?select=*`,
+  {
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`,
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  }
+);
+const data = await response.json();
+```
+
+**Key points:**
+- All API routes now use direct REST API calls
+- Always include `cache: 'no-store'` in fetch options
+- For updates, use `PATCH` method with query params for filtering
+- The `src/lib/supabase.ts` shared client is no longer used
+
+**Reference:** This issue may affect any Supabase + Vercel project. Document in main turing reference if encountered again.
