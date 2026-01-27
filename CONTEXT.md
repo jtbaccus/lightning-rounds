@@ -1,7 +1,7 @@
 # Lightning Rounds - Current Context
 
 ## Status
-**Phase:** MVP Complete (Local Testing)
+**Phase:** Production Ready
 **Last Updated:** 2026-01-26
 
 ## Current Goals
@@ -12,24 +12,29 @@
 - [x] Add keyboard shortcuts
 - [x] Add local dev mode (no DB required)
 - [x] Add sample questions for testing
-- [ ] Parse real questions from docx
-- [ ] Set up Supabase
-- [ ] Seed production database
+- [x] Parse real questions from docx
+- [x] Set up Supabase
+- [x] Seed production database (751 questions)
+- [x] Multi-category selection (checkbox grid)
+- [x] Tabbed interface (Categories, Play, History)
+- [x] History tracking for answered questions
 - [ ] Deploy to Vercel
 
 ## What's Working
 
-**Fully functional locally:**
-- Random question selection
-- Category filtering (6 categories in sample data)
+**Fully functional with Supabase:**
+- 751 questions across 12 medical categories
+- Multi-category selection via checkbox grid
+- Random question selection from selected categories
 - Progress tracking (remaining/total)
-- Reveal answer flow
-- Mark questions as asked
-- Reset all questions
-- Keyboard shortcuts (Space/Enter)
-- Category badge hidden when "All" selected
+- Reveal answer flow with keyboard shortcuts
+- Mark questions as asked (persists in database)
+- History page showing all answered questions
+- Reset all questions with confirmation
+- Tabbed navigation between pages
 
-**Sample data:** 10 medical questions across Cardiovascular, Pulmonary, Endocrine, Infectious Disease, Gastroenterology, and Neurology.
+**Categories (12):**
+Cardiology, Dermatology, Endocrinology, Gastroenterology, Geriatrics and Palliative Care, Hematology, Infectious Diseases, Neurology, Oncology, Pulmonology, Renal, Rheumatology
 
 ## Architecture Decisions
 
@@ -44,50 +49,56 @@ Using one `questions` table with an `asked` boolean flag. Simple and sufficient 
 ### Server-side API Routes
 All database operations go through Next.js API routes. Client never talks directly to Supabase or local store.
 
-### Category Badge Logic
-Category/subcategory badge only displays when user has filtered to a specific category. Hidden on "All" to reduce visual clutter during general play.
+### Multi-Category Selection
+- Empty selection array = all categories
+- Checkbox grid with "All" and "Clear" buttons
+- Categories passed as comma-separated query param
+
+### Tabbed Interface
+Three tabs keep the UI clean:
+1. **Categories** — Setup/configuration
+2. **Play** — Main gameplay
+3. **History** — Review answered questions
+
+### Cache Bypass for History
+History API uses `force-dynamic` and `cache: 'no-store'` to ensure fresh data on every fetch.
 
 ## Known Issues
 None.
 
 ## Next Steps
 
-1. **Parse real questions:** Run `npx tsx scripts/parse-docx.ts` and review output
-   - Parser may need adjustment based on actual docx format
-   - Edit `data/questions.json` manually if needed
-
-2. **Set up Supabase:**
-   - Create project at supabase.com
-   - Run schema SQL (see CLAUDE.md)
-   - Copy credentials to `.env.local`
-
-3. **Seed database:** Run `npx tsx scripts/seed.ts`
-
-4. **Deploy:** Connect to Vercel, add env vars
+1. **Deploy to Vercel:**
+   - Connect GitHub repo
+   - Add Supabase env vars
+   - Deploy
 
 ## File Structure
 ```
 src/
 ├── app/
-│   ├── page.tsx              # Main game UI
+│   ├── page.tsx              # Main app with tabs
 │   ├── layout.tsx
 │   ├── globals.css
 │   └── api/
 │       ├── question/route.ts
 │       ├── categories/route.ts
+│       ├── history/route.ts
 │       └── reset/route.ts
 ├── components/
+│   ├── Tabs.tsx
 │   ├── QuestionCard.tsx
 │   ├── CategorySelector.tsx
-│   └── ProgressBar.tsx
+│   ├── ProgressBar.tsx
+│   └── HistoryList.tsx
 ├── lib/
 │   ├── supabase.ts           # DB client
 │   └── local-store.ts        # Dev fallback
 └── types/
     └── question.ts
 data/
-├── merged_qbank.docx         # Source (659 questions)
-└── questions.json            # Sample/parsed data
+├── merged_qbank.docx         # Source (original)
+└── questions.json            # Parsed data
 scripts/
 ├── parse-docx.ts
 └── seed.ts
@@ -96,4 +107,9 @@ scripts/
 ## Recent Changes
 - 2026-01-26: Initial project setup
 - 2026-01-26: Added local dev mode with sample questions
-- 2026-01-26: Category badge only shows when filtering
+- 2026-01-26: Set up Supabase, parsed and seeded 751 questions
+- 2026-01-26: Changed category selector from dropdown to checkbox grid
+- 2026-01-26: Added tabbed interface (Categories, Play, History)
+- 2026-01-26: Added history page to track answered questions
+- 2026-01-26: Consolidated duplicate categories (Cardiovascular→Cardiology, etc.)
+- 2026-01-26: Renamed Nervous→Neurology

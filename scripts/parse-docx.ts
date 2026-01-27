@@ -1,6 +1,13 @@
 /**
  * Parse merged_qbank.docx and extract Q&A pairs
  *
+ * Document structure:
+ * - Main categories (7): "Diseases of the X System", "Infectious Diseases", etc.
+ * - Subtopics under each category
+ * - Each subtopic has a Question/Answer table
+ *
+ * Pattern: [maybe category] [subtopic] Question Answer [Q&A pairs...]
+ *
  * Usage: npx tsx scripts/parse-docx.ts
  * Output: data/questions.json
  */
@@ -27,113 +34,149 @@ async function parseDocx(): Promise<void> {
   console.log('Parsing questions...');
   const questions: ParsedQuestion[] = [];
 
-  // Split by lines and process
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  // Split by lines and filter empty
+  const lines = text.split('\n').map((l) => l.trim()).filter((l) => l);
+
+  // Find all "Question"/"Answer" header pairs (marks start of Q&A tables)
+  const tableStarts: number[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (
+      lines[i].toLowerCase() === 'question' &&
+      i + 1 < lines.length &&
+      lines[i + 1].toLowerCase() === 'answer'
+    ) {
+      tableStarts.push(i);
+    }
+  }
+
+  console.log(`Found ${tableStarts.length} Q&A tables`);
 
   let currentCategory = 'General';
-  let currentSubcategory: string | null = null;
-  let i = 0;
 
-  while (i < lines.length) {
-    const line = lines[i];
+  // Process each table
+  for (let tableIdx = 0; tableIdx < tableStarts.length; tableIdx++) {
+    const qHeaderIdx = tableStarts[tableIdx];
 
-    // Detect category headers (typically all caps or followed by specific patterns)
-    // Adjust this regex based on actual document structure
-    if (line.match(/^[A-Z][A-Z\s]+$/) && line.length < 50) {
-      currentCategory = line.trim();
-      currentSubcategory = null;
-      i++;
-      continue;
+    // Line -1 is ALWAYS the subtopic
+    const subtopic = lines[qHeaderIdx - 1] || null;
+
+    // Line -2 MIGHT be a main category (if it matches category patterns)
+    const maybeCategoryLine = lines[qHeaderIdx - 2] || '';
+    if (isMainCategory(maybeCategoryLine)) {
+      currentCategory = cleanCategory(maybeCategoryLine);
     }
 
-    // Detect subcategory (often title case or has specific markers)
-    if (line.endsWith(':') && line.length < 60) {
-      currentSubcategory = line.replace(/:$/, '').trim();
-      i++;
-      continue;
+    // Find where this table ends (next table's headers, accounting for 1-2 heading lines)
+    let tableEnd = lines.length;
+    if (tableIdx + 1 < tableStarts.length) {
+      const nextTableStart = tableStarts[tableIdx + 1];
+      // Table ends at the heading(s) before next table
+      // Could be 1 line (just subtopic) or 2 lines (category + subtopic)
+      const nextMaybeCategory = lines[nextTableStart - 2] || '';
+      if (isMainCategory(nextMaybeCategory)) {
+        tableEnd = nextTableStart - 2;
+      } else {
+        tableEnd = nextTableStart - 1;
+      }
     }
 
-    // Try to find Q/A patterns
-    // Pattern 1: "Q: ... A: ..."
-    if (line.toLowerCase().startsWith('q:') || line.toLowerCase().startsWith('question:')) {
-      const questionText = line.replace(/^(q:|question:)\s*/i, '').trim();
+    // Read Q&A pairs (start after "Question" and "Answer" headers)
+    let i = qHeaderIdx + 2;
+    while (i + 1 < tableEnd) {
+      const question = lines[i];
+      const answer = lines[i + 1];
 
-      // Look for answer in next lines
-      let answerText = '';
-      i++;
-      while (i < lines.length) {
-        const nextLine = lines[i];
-        if (nextLine.toLowerCase().startsWith('a:') || nextLine.toLowerCase().startsWith('answer:')) {
-          answerText = nextLine.replace(/^(a:|answer:)\s*/i, '').trim();
-          i++;
-          break;
-        } else if (nextLine.toLowerCase().startsWith('q:') || nextLine.toLowerCase().startsWith('question:')) {
-          // No answer found, use placeholder
-          break;
-        }
-        i++;
-      }
+      questions.push({
+        category: currentCategory,
+        subcategory: subtopic,
+        question: question,
+        answer: answer,
+      });
 
-      if (questionText && answerText) {
-        questions.push({
-          category: currentCategory,
-          subcategory: currentSubcategory,
-          question: questionText,
-          answer: answerText,
-        });
-      }
-      continue;
+      i += 2;
     }
-
-    // Pattern 2: Numbered questions (1. Question... Answer:...)
-    const numberedMatch = line.match(/^\d+[\.\)]\s*(.+)/);
-    if (numberedMatch) {
-      let fullText = numberedMatch[1];
-      i++;
-
-      // Collect until we hit another number or clear separator
-      while (i < lines.length && !lines[i].match(/^\d+[\.\)]/)) {
-        fullText += ' ' + lines[i];
-        i++;
-      }
-
-      // Try to split question/answer
-      const answerSplit = fullText.match(/(.+?)\s*(?:Answer:|A:)\s*(.+)/i);
-      if (answerSplit) {
-        questions.push({
-          category: currentCategory,
-          subcategory: currentSubcategory,
-          question: answerSplit[1].trim(),
-          answer: answerSplit[2].trim(),
-        });
-      }
-      continue;
-    }
-
-    i++;
   }
 
   console.log(`Found ${questions.length} questions`);
 
+  // Add IDs for seeding
+  const questionsWithIds = questions.map((q, idx) => ({
+    id: idx + 1,
+    ...q,
+    asked: false,
+  }));
+
   // Write output
-  fs.writeFileSync(outputPath, JSON.stringify(questions, null, 2));
+  fs.writeFileSync(outputPath, JSON.stringify(questionsWithIds, null, 2));
   console.log(`Wrote ${outputPath}`);
 
-  // Print category summary
+  // Print summary
   const categoryCounts = new Map<string, number>();
   for (const q of questions) {
     categoryCounts.set(q.category, (categoryCounts.get(q.category) || 0) + 1);
   }
+
   console.log('\nCategories:');
-  for (const [cat, count] of Array.from(categoryCounts.entries())) {
+  for (const [cat, count] of Array.from(categoryCounts.entries()).sort()) {
     console.log(`  ${cat}: ${count}`);
   }
 
-  if (questions.length < 100) {
-    console.log('\n⚠️  Warning: Found fewer questions than expected.');
-    console.log('   The document format may need custom parsing logic.');
-    console.log('   Review data/questions.json and adjust parse-docx.ts as needed.');
+  // Count subcategories per category
+  const subcatsByCategory = new Map<string, Set<string>>();
+  for (const q of questions) {
+    if (q.subcategory) {
+      if (!subcatsByCategory.has(q.category)) {
+        subcatsByCategory.set(q.category, new Set());
+      }
+      subcatsByCategory.get(q.category)!.add(q.subcategory);
+    }
   }
+
+  console.log('\nSubcategories per category:');
+  for (const [cat, subs] of Array.from(subcatsByCategory.entries()).sort()) {
+    console.log(`  ${cat}: ${subs.size} subtopics`);
+  }
+
+  if (questions.length < 600) {
+    console.log('\n⚠️  Warning: Found fewer questions than expected (659).');
+  } else {
+    console.log('\n✓ Parsing looks good!');
+  }
+}
+
+/**
+ * Check if a line is a main category header
+ */
+function isMainCategory(line: string): boolean {
+  const lower = line.toLowerCase();
+
+  // "Diseases of the X System" pattern
+  if (lower.includes('diseases of')) return true;
+
+  // Numbered categories like "2 Diseases of the Pulmonary System"
+  if (/^\d+\s+diseases/i.test(line)) return true;
+
+  // Known standalone category names
+  const categories = [
+    'infectious diseases',
+    'geriatrics and palliative care',
+    'additional questions',
+  ];
+
+  return categories.some((c) => lower.includes(c));
+}
+
+/**
+ * Clean up category names
+ */
+function cleanCategory(name: string): string {
+  // Remove leading numbers like "2 " or "3 "
+  let cleaned = name.replace(/^\d+\s+/, '');
+  // Remove "Diseases of the " prefix
+  cleaned = cleaned.replace(/^Diseases of the\s+/i, '');
+  // Remove trailing "System"
+  cleaned = cleaned.replace(/\s+System$/i, '');
+  return cleaned.trim();
 }
 
 parseDocx().catch(console.error);

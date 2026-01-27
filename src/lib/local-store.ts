@@ -36,12 +36,12 @@ export function resetAll(): void {
   }
 }
 
-export function getRandomUnasked(category?: string): Question | null {
+export function getRandomUnasked(categories?: string[]): Question | null {
   const questions = loadQuestions();
   let unasked = questions.filter((q) => !q.asked);
 
-  if (category && category !== 'All') {
-    unasked = unasked.filter((q) => q.category === category);
+  if (categories && categories.length > 0) {
+    unasked = unasked.filter((q) => categories.includes(q.category));
   }
 
   if (unasked.length === 0) {
@@ -52,12 +52,12 @@ export function getRandomUnasked(category?: string): Question | null {
   return unasked[randomIndex];
 }
 
-export function getCounts(category?: string): { remaining: number; total: number } {
+export function getCounts(categories?: string[]): { remaining: number; total: number } {
   const questions = loadQuestions();
   let filtered = questions;
 
-  if (category && category !== 'All') {
-    filtered = questions.filter((q) => q.category === category);
+  if (categories && categories.length > 0) {
+    filtered = questions.filter((q) => categories.includes(q.category));
   }
 
   return {

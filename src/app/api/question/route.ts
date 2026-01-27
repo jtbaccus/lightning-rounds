@@ -3,15 +3,17 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Question, QuestionResponse } from '@/types/question';
 import * as localStore from '@/lib/local-store';
 
-// GET /api/question?category=X - Get random unasked question
+// GET /api/question?categories=X,Y,Z - Get random unasked question
+// Empty categories or no param = all categories
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const category = searchParams.get('category');
+  const categoriesParam = searchParams.get('categories');
+  const categories = categoriesParam ? categoriesParam.split(',').filter(Boolean) : [];
 
   // Use local store if Supabase isn't configured
   if (!isSupabaseConfigured) {
-    const question = localStore.getRandomUnasked(category || undefined);
-    const counts = localStore.getCounts(category || undefined);
+    const question = localStore.getRandomUnasked(categories.length > 0 ? categories : undefined);
+    const counts = localStore.getCounts(categories.length > 0 ? categories : undefined);
 
     const response: QuestionResponse = {
       question,
@@ -28,8 +30,8 @@ export async function GET(request: NextRequest) {
     .select('*')
     .eq('asked', false);
 
-  if (category && category !== 'All') {
-    query = query.eq('category', category);
+  if (categories.length > 0) {
+    query = query.in('category', categories);
   }
 
   const { data: unaskedQuestions, error: fetchError } = await query;
@@ -43,8 +45,8 @@ export async function GET(request: NextRequest) {
     .from('questions')
     .select('id', { count: 'exact' });
 
-  if (category && category !== 'All') {
-    countQuery = countQuery.eq('category', category);
+  if (categories.length > 0) {
+    countQuery = countQuery.in('category', categories);
   }
 
   const { count: total } = await countQuery;
