@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Question, QuestionResponse } from '@/types/question';
 import * as localStore from '@/lib/local-store';
 
 // GET /api/question?categories=X,Y,Z - Get random unasked question
-// Empty categories or no param = all categories
 export async function GET(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
   const searchParams = request.nextUrl.searchParams;
   const categoriesParam = searchParams.get('categories');
   const categories = categoriesParam ? categoriesParam.split(',').filter(Boolean) : [];
 
   // Use local store if Supabase isn't configured
-  if (!isSupabaseConfigured) {
+  if (!supabaseUrl || !supabaseKey) {
     const question = localStore.getRandomUnasked(categories.length > 0 ? categories : undefined);
     const counts = localStore.getCounts(categories.length > 0 ? categories : undefined);
 
@@ -24,38 +25,43 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response);
   }
 
-  // Build query for unasked questions
-  let query = supabase!
-    .from('questions')
-    .select('*')
-    .eq('asked', false);
+  // Use raw fetch to bypass any Supabase client caching
+  const fetchResponse = await fetch(
+    `${supabaseUrl}/rest/v1/questions?select=*`,
+    {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    }
+  );
+
+  if (!fetchResponse.ok) {
+    return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500 });
+  }
+
+  const allQuestions = await fetchResponse.json();
+
+  // Filter unasked questions
+  let unaskedQuestions = (allQuestions || []).filter((q: Question) => q.asked === false);
 
   if (categories.length > 0) {
-    query = query.in('category', categories);
+    unaskedQuestions = unaskedQuestions.filter((q: Question) => categories.includes(q.category));
   }
 
-  const { data: unaskedQuestions, error: fetchError } = await query;
-
-  if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 500 });
-  }
-
-  // Get counts
-  let countQuery = supabase!
-    .from('questions')
-    .select('id', { count: 'exact' });
-
+  // Get total count for selected categories
+  let totalForCategories = allQuestions || [];
   if (categories.length > 0) {
-    countQuery = countQuery.in('category', categories);
+    totalForCategories = totalForCategories.filter((q: Question) => categories.includes(q.category));
   }
-
-  const { count: total } = await countQuery;
 
   // Pick random question from unasked
-  const remaining = unaskedQuestions?.length || 0;
+  const remaining = unaskedQuestions.length;
   let question: Question | null = null;
 
-  if (unaskedQuestions && unaskedQuestions.length > 0) {
+  if (unaskedQuestions.length > 0) {
     const randomIndex = Math.floor(Math.random() * unaskedQuestions.length);
     question = unaskedQuestions[randomIndex] as Question;
   }
@@ -63,7 +69,7 @@ export async function GET(request: NextRequest) {
   const response: QuestionResponse = {
     question,
     remaining,
-    total: total || 0,
+    total: totalForCategories.length,
   };
 
   return NextResponse.json(response);
@@ -71,6 +77,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/question - Mark question as asked
 export async function POST(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
   const body = await request.json();
   const { id } = body;
 
@@ -79,19 +88,33 @@ export async function POST(request: NextRequest) {
   }
 
   // Use local store if Supabase isn't configured
-  if (!isSupabaseConfigured) {
+  if (!supabaseUrl || !supabaseKey) {
     localStore.markAsked(id);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, mode: 'local' });
   }
 
-  const { error } = await supabase!
-    .from('questions')
-    .update({ asked: true })
-    .eq('id', id);
+  // Use raw fetch to update - PATCH request to Supabase REST API
+  const fetchResponse = await fetch(
+    `${supabaseUrl}/rest/v1/questions?id=eq.${id}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+      },
+      body: JSON.stringify({ asked: true }),
+      cache: 'no-store',
+    }
+  );
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!fetchResponse.ok) {
+    const errorText = await fetchResponse.text();
+    return NextResponse.json({ error: errorText }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true });
+  const updated = await fetchResponse.json();
+
+  return NextResponse.json({ success: true, mode: 'supabase', updated });
 }

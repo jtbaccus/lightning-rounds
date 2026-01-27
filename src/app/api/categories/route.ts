@@ -1,23 +1,38 @@
 import { NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { CategoryCount } from '@/types/question';
 import * as localStore from '@/lib/local-store';
 
+// Force dynamic to prevent caching
+export const dynamic = 'force-dynamic';
+
 // GET /api/categories - List categories with counts
 export async function GET() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
   // Use local store if Supabase isn't configured
-  if (!isSupabaseConfigured) {
+  if (!supabaseUrl || !supabaseKey) {
     return NextResponse.json(localStore.getCategories());
   }
 
-  // Get all questions to compute category counts
-  const { data: questions, error } = await supabase!
-    .from('questions')
-    .select('category, asked');
+  // Use raw fetch to bypass any Supabase client caching
+  const fetchResponse = await fetch(
+    `${supabaseUrl}/rest/v1/questions?select=category,asked`,
+    {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    }
+  );
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!fetchResponse.ok) {
+    return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500 });
   }
+
+  const questions = await fetchResponse.json();
 
   // Aggregate counts by category
   const categoryMap = new Map<string, { total: number; remaining: number }>();
@@ -42,7 +57,7 @@ export async function GET() {
 
   // Calculate overall totals
   const totalQuestions = questions?.length || 0;
-  const totalRemaining = questions?.filter(q => !q.asked).length || 0;
+  const totalRemaining = questions?.filter((q: { asked: boolean }) => !q.asked).length || 0;
 
   return NextResponse.json({
     categories,
