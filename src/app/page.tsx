@@ -57,7 +57,7 @@ export default function Home() {
 
   const fetchHistory = useCallback(async () => {
     setHistoryLoading(true);
-    const res = await fetch('/api/history', { cache: 'no-store' });
+    const res = await fetch(`/api/history?t=${Date.now()}`, { cache: 'no-store' });
     const data = await res.json();
     setHistory(data.questions || []);
     setHistoryLoading(false);

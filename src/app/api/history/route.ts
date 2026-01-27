@@ -9,7 +9,10 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   if (!isSupabaseConfigured) {
     const questions = localStore.loadQuestions().filter((q) => q.asked);
-    return NextResponse.json({ questions });
+    return NextResponse.json(
+      { questions },
+      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
+    );
   }
 
   const { data: questions, error } = await supabase!
@@ -22,5 +25,8 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ questions: questions || [] });
+  return NextResponse.json(
+    { questions: questions || [] },
+    { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
+  );
 }
