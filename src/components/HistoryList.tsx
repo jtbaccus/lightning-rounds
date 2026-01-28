@@ -11,20 +11,26 @@ interface HistoryListProps {
 export function HistoryList({ questions, loading, onClear }: HistoryListProps) {
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow p-8 text-center">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+      <div className="bg-deep rounded-xl border border-elevated p-12 text-center">
+        <div className="flex gap-2 justify-center mb-4">
+          <span className="loader-dot w-3 h-3 bg-neon-gold rounded-full"></span>
+          <span className="loader-dot w-3 h-3 bg-neon-gold rounded-full"></span>
+          <span className="loader-dot w-3 h-3 bg-neon-gold rounded-full"></span>
         </div>
+        <p className="font-display text-lg text-neon-gold uppercase tracking-widest">
+          Loading...
+        </p>
       </div>
     );
   }
 
   if (questions.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-8 text-center">
-        <p className="text-gray-600">No questions answered yet.</p>
-        <p className="text-gray-500 text-sm mt-2">
+      <div className="bg-deep rounded-xl border border-elevated p-12 text-center">
+        <p className="font-display text-xl text-silver uppercase tracking-wide mb-2">
+          No Questions Answered Yet
+        </p>
+        <p className="text-silver/60 font-body text-sm">
           Questions you answer will appear here.
         </p>
       </div>
@@ -34,31 +40,33 @@ export function HistoryList({ questions, loading, onClear }: HistoryListProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600">
+        <p className="font-display text-sm text-neon-gold uppercase tracking-wide">
           {questions.length} question{questions.length !== 1 ? 's' : ''} answered
         </p>
         <button
           onClick={onClear}
-          className="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
+          className="px-4 py-2 font-display text-xs font-bold text-neon-pink bg-neon-pink/10 border border-neon-pink/30 rounded-lg hover:bg-neon-pink/20 hover:shadow-glow-pink transition-all duration-200 uppercase"
         >
           Clear History
         </button>
       </div>
 
-      <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+      <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
         {questions.map((q, idx) => (
           <div
             key={q.id}
-            className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500"
+            className="bg-deep rounded-xl border-l-4 border-neon-cyan p-4 hover:bg-elevated/50 transition-colors"
           >
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <span className="font-display text-xs text-neon-purple bg-neon-purple/20 px-3 py-1 rounded-full uppercase">
                 {q.category}
               </span>
-              <span className="text-xs text-gray-400">#{questions.length - idx}</span>
+              <span className="font-display text-sm font-bold text-neon-gold">
+                #{questions.length - idx}
+              </span>
             </div>
-            <p className="text-gray-900 font-medium mb-2">{q.question}</p>
-            <p className="text-gray-600 text-sm">{q.answer}</p>
+            <p className="text-white font-body font-medium mb-2">{q.question}</p>
+            <p className="text-silver font-body text-sm">{q.answer}</p>
           </div>
         ))}
       </div>

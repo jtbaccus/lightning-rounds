@@ -141,10 +141,10 @@ export default function Home() {
 
   return (
     <main className="min-h-screen p-4 md:p-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-4">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="mb-6 text-center">
+          <h1 className="font-display text-4xl md:text-5xl font-black text-neon-gold text-glow-gold tracking-wider uppercase">
             Lightning Rounds
           </h1>
         </div>
@@ -154,7 +154,7 @@ export default function Home() {
 
         {/* Categories Tab */}
         {activeTab === 'categories' && (
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-deep rounded-xl border border-elevated p-6">
             <CategorySelector
               categories={categories}
               selected={selectedCategories}
@@ -163,10 +163,10 @@ export default function Home() {
               totalQuestions={totalQuestions}
             />
 
-            <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="mt-6 pt-4 border-t border-elevated">
               <button
                 onClick={() => setActiveTab('play')}
-                className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full px-6 py-4 bg-neon-gold text-void font-display font-bold text-lg rounded-lg hover:shadow-glow-gold transition-all duration-200 uppercase tracking-wide"
               >
                 Start Playing
               </button>
@@ -177,15 +177,15 @@ export default function Home() {
         {/* Play Tab */}
         {activeTab === 'play' && (
           <>
-            <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="bg-deep rounded-xl border border-elevated p-4 mb-6">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-silver font-body">
                   {selectedCategories.length === 0
                     ? 'All categories'
                     : `${selectedCategories.length} categor${selectedCategories.length === 1 ? 'y' : 'ies'} selected`}
                   <button
                     onClick={() => setActiveTab('categories')}
-                    className="ml-2 text-blue-600 hover:underline"
+                    className="ml-2 text-neon-cyan hover:text-neon-gold transition-colors"
                   >
                     Change
                   </button>
@@ -196,16 +196,23 @@ export default function Home() {
 
                   <button
                     onClick={() => setShowResetConfirm(true)}
-                    className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                    className="px-4 py-2 text-sm font-display font-bold text-neon-pink bg-neon-pink/10 border border-neon-pink/30 rounded-lg hover:bg-neon-pink/20 hover:shadow-glow-pink transition-all duration-200 uppercase"
                   >
                     Reset
                   </button>
                 </div>
               </div>
 
-              <p className="text-xs text-gray-500 mt-2">
-                Press <kbd className="px-1.5 py-0.5 bg-gray-200 rounded text-xs">Space</kbd> to reveal,{' '}
-                <kbd className="px-1.5 py-0.5 bg-gray-200 rounded text-xs">Enter</kbd> for next
+              <p className="text-xs text-silver/70 mt-3 font-body">
+                Press{' '}
+                <kbd className="px-2 py-1 bg-elevated text-neon-cyan rounded text-xs font-display">
+                  Space
+                </kbd>{' '}
+                to reveal,{' '}
+                <kbd className="px-2 py-1 bg-elevated text-neon-green rounded text-xs font-display">
+                  Enter
+                </kbd>{' '}
+                for next
               </p>
             </div>
 
@@ -231,25 +238,25 @@ export default function Home() {
 
         {/* Reset Confirmation Modal */}
         {showResetConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <div className="fixed inset-0 bg-void/90 flex items-center justify-center p-4 z-50">
+            <div className="bg-deep rounded-xl border-2 border-neon-gold/50 shadow-glow-gold p-6 max-w-md w-full">
+              <h3 className="font-display text-xl font-bold text-neon-gold mb-3 uppercase tracking-wide">
                 Reset All Questions?
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-silver font-body mb-6">
                 This will mark all questions as unasked and clear the history.
                 Use this when starting with a new group of students.
               </p>
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowResetConfirm(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-5 py-2.5 text-silver font-display font-bold bg-elevated border border-silver/30 rounded-lg hover:bg-elevated/80 hover:text-white transition-all duration-200 uppercase"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleReset}
-                  className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                  className="px-5 py-2.5 text-void font-display font-bold bg-neon-pink rounded-lg hover:shadow-glow-pink transition-all duration-200 uppercase"
                 >
                   Reset All
                 </button>

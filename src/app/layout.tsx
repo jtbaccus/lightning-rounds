@@ -1,16 +1,26 @@
 import type { Metadata } from 'next';
-import localFont from 'next/font/local';
+import { Orbitron, Oswald, Inter } from 'next/font/google';
 import './globals.css';
 
-const geistSans = localFont({
-  src: './fonts/GeistVF.woff',
-  variable: '--font-geist-sans',
-  weight: '100 900',
+const orbitron = Orbitron({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  variable: '--font-orbitron',
+  display: 'swap',
 });
-const geistMono = localFont({
-  src: './fonts/GeistMonoVF.woff',
-  variable: '--font-geist-mono',
-  weight: '100 900',
+
+const oswald = Oswald({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  variable: '--font-oswald',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-inter',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -26,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${orbitron.variable} ${oswald.variable} ${inter.variable} antialiased`}
       >
         {children}
       </body>

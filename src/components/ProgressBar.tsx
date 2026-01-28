@@ -11,14 +11,17 @@ export function ProgressBar({ remaining, total }: ProgressBarProps) {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden max-w-32">
+      <div className="flex-1 h-3 bg-void border border-neon-gold/50 rounded-full overflow-hidden max-w-32">
         <div
-          className="h-full bg-blue-600 transition-all duration-300"
-          style={{ width: `${percentage}%` }}
+          className="h-full bg-gradient-to-r from-neon-gold to-yellow-500 transition-all duration-300"
+          style={{
+            width: `${percentage}%`,
+            boxShadow: 'inset 0 0 10px rgba(255, 255, 255, 0.3)'
+          }}
         />
       </div>
-      <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
-        {remaining}/{total} remaining
+      <span className="font-display text-sm font-bold text-neon-gold whitespace-nowrap">
+        {remaining}/{total}
       </span>
     </div>
   );

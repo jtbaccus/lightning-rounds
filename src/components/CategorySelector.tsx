@@ -63,55 +63,54 @@ export function CategorySelector({
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-gray-700">
+      <div className="flex items-center justify-between mb-4">
+        <span className="font-display text-sm font-bold text-neon-gold uppercase tracking-wide">
           Categories ({selectedRemaining}/{selectedTotal} remaining)
         </span>
         <div className="flex gap-2">
           <button
             onClick={handleSelectAll}
-            className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+            className={`px-4 py-2 font-display text-xs font-bold rounded-lg transition-all duration-200 uppercase ${
               allSelected
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-neon-gold text-void shadow-glow-gold'
+                : 'bg-elevated text-silver hover:text-neon-gold hover:bg-elevated/80'
             }`}
           >
             All
           </button>
           <button
             onClick={handleClearAll}
-            className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 font-display text-xs font-bold bg-elevated text-silver rounded-lg hover:text-neon-pink hover:bg-elevated/80 transition-all duration-200 uppercase"
           >
             Clear
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {categories.map((cat) => {
           const isSelected = allSelected || selected.includes(cat.category);
           return (
-            <label
+            <button
               key={cat.category}
-              className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+              onClick={() => handleToggle(cat.category)}
+              className={`p-3 rounded-lg cursor-pointer transition-all duration-200 text-left ${
                 isSelected
-                  ? 'bg-blue-50 border border-blue-200'
-                  : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                  ? 'bg-neon-cyan/10 border-2 border-neon-cyan shadow-glow-cyan'
+                  : 'bg-elevated border-2 border-transparent hover:border-silver/30'
               }`}
             >
-              <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={() => handleToggle(cat.category)}
-                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700 truncate flex-1">
+              <span className={`font-body text-sm block truncate ${
+                isSelected ? 'text-neon-cyan' : 'text-silver'
+              }`}>
                 {cat.category}
               </span>
-              <span className="text-xs text-gray-500">
+              <span className={`font-display text-xs ${
+                isSelected ? 'text-neon-cyan/70' : 'text-silver/50'
+              }`}>
                 {cat.remaining}/{cat.total}
               </span>
-            </label>
+            </button>
           );
         })}
       </div>

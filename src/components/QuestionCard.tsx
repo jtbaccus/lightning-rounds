@@ -21,20 +21,26 @@ export function QuestionCard({
 }: QuestionCardProps) {
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+      <div className="bg-deep rounded-xl border border-neon-cyan/30 shadow-glow-cyan p-12 text-center min-h-[300px] flex flex-col items-center justify-center">
+        <div className="flex gap-2 mb-4">
+          <span className="loader-dot w-3 h-3 bg-neon-gold rounded-full"></span>
+          <span className="loader-dot w-3 h-3 bg-neon-gold rounded-full"></span>
+          <span className="loader-dot w-3 h-3 bg-neon-gold rounded-full"></span>
         </div>
+        <p className="font-display text-lg text-neon-gold uppercase tracking-widest">
+          Loading...
+        </p>
       </div>
     );
   }
 
   if (!question) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-        <p className="text-xl text-gray-600">No more questions available!</p>
-        <p className="text-gray-500 mt-2">
+      <div className="bg-deep rounded-xl border border-neon-cyan/30 p-12 text-center min-h-[300px] flex flex-col items-center justify-center">
+        <p className="font-display text-2xl text-neon-gold uppercase tracking-wide mb-3">
+          No More Questions!
+        </p>
+        <p className="text-silver font-body">
           Reset to start over, or select a different category.
         </p>
       </div>
@@ -42,11 +48,11 @@ export function QuestionCard({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-8">
+    <div className="bg-deep rounded-xl border border-neon-cyan/30 shadow-glow-cyan p-8 md:p-12 min-h-[300px]">
       {/* Category badge - only shown when filtering by category */}
       {showCategory && (
-        <div className="mb-4">
-          <span className="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
+        <div className="mb-6 flex justify-center">
+          <span className="inline-block bg-neon-purple/20 text-neon-purple font-display text-sm px-4 py-2 rounded-full border border-neon-purple/50 shadow-glow-purple uppercase tracking-wide">
             {question.category}
             {question.subcategory && ` / ${question.subcategory}`}
           </span>
@@ -54,32 +60,34 @@ export function QuestionCard({
       )}
 
       {/* Question */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 leading-relaxed">
+      <div className="mb-8 text-center">
+        <h2 className="font-question text-2xl md:text-3xl lg:text-4xl text-white leading-relaxed">
           {question.question}
         </h2>
       </div>
 
       {/* Answer (hidden until revealed) */}
       {showAnswer && (
-        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded">
-          <p className="text-green-900 leading-relaxed">{question.answer}</p>
+        <div className="mb-8 p-6 bg-neon-green/10 border-2 border-neon-green/50 rounded-xl shadow-glow-green animate-reveal-slide">
+          <p className="text-neon-green text-center font-body text-lg md:text-xl leading-relaxed">
+            {question.answer}
+          </p>
         </div>
       )}
 
       {/* Actions */}
-      <div className="flex justify-center gap-4">
+      <div className="flex justify-center">
         {!showAnswer ? (
           <button
             onClick={onReveal}
-            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="px-10 py-4 bg-neon-pink text-white font-display font-bold text-lg rounded-xl animate-pulse-glow hover:scale-105 transition-transform duration-200 uppercase tracking-wide"
           >
             Show Answer
           </button>
         ) : (
           <button
             onClick={onNext}
-            className="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            className="px-10 py-4 bg-neon-green text-void font-display font-bold text-lg rounded-xl shadow-glow-green hover:scale-105 transition-transform duration-200 uppercase tracking-wide"
           >
             Next Question
           </button>
