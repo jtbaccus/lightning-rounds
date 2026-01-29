@@ -1,8 +1,8 @@
 # Lightning Rounds - Current Context
 
 ## Status
-**Phase:** Production Ready
-**Last Updated:** 2026-01-26
+**Phase:** Deployed
+**Last Updated:** 2026-01-28
 
 ## Current Goals
 - [x] Initialize Next.js project
@@ -18,7 +18,7 @@
 - [x] Multi-category selection (checkbox grid)
 - [x] Tabbed interface (Categories, Play, History)
 - [x] History tracking for answered questions
-- [ ] Deploy to Vercel
+- [x] Deploy to Vercel
 
 ## What's Working
 
@@ -68,10 +68,7 @@ None.
 
 ## Next Steps
 
-1. **Deploy to Vercel:**
-   - Connect GitHub repo
-   - Add Supabase env vars
-   - Deploy
+None — project is complete and deployed.
 
 ## File Structure
 ```
